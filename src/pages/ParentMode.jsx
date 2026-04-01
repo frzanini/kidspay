@@ -103,6 +103,21 @@ function useWeekData(weekId) {
   return { entries, alreadyClosed, closeWeek }
 }
 
+function useWeeksHistory() {
+  const [weeks, setWeeks] = useState([])
+
+  async function load() {
+    const db = await getDB()
+    const allWeeks = await db.getAll('weeks')
+    allWeeks.sort((a, b) => new Date(b.closedAt) - new Date(a.closedAt))
+    setWeeks(allWeeks)
+  }
+
+  useEffect(() => { load() }, [])
+
+  return { weeks, load }
+}
+
 // ── Toggle switch ────────────────────────────────────────────────────────────
 
 function Toggle({ value, onChange }) {
@@ -505,7 +520,7 @@ function ProfileTab({ profile, onSave }) {
 
 // ── Weekly closing tab ───────────────────────────────────────────────────────
 
-function WeekClosingTab({ tasks, profile }) {
+function WeekClosingTab({ tasks, profile, onWeekClosed }) {
   const weekId = getISOWeekId()
   const { entries, alreadyClosed, closeWeek } = useWeekData(weekId)
 
@@ -542,6 +557,7 @@ function WeekClosingTab({ tasks, profile }) {
       hadPerfectWeek: perfect,
       books,
     })
+    onWeekClosed?.()
     setCelebration(false)
     setDone(true)
   }
@@ -726,12 +742,157 @@ function WeekClosingTab({ tasks, profile }) {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
+function HistoryTab({ weeks }) {
+  function formatClosedAt(isoDate) {
+    return new Date(isoDate).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    })
+  }
+
+  if (weeks.length === 0) {
+    return (
+      <div style={{ padding: '64px 24px', textAlign: 'center' }}>
+        <div style={{ fontSize: 52, marginBottom: 16 }}>🗂️</div>
+        <h3 style={{
+          fontFamily: 'Fraunces, Georgia, serif',
+          fontSize: 22, fontWeight: 700, color: '#f1f5f9', margin: '0 0 8px',
+        }}>
+          Sem histórico ainda
+        </h3>
+        <p style={{ color: '#64748b', fontSize: 14, lineHeight: 1.5 }}>
+          Feche a primeira semana para começar a acompanhar a evolução.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ padding: '20px 16px 100px' }}>
+      <p style={{
+        margin: '0 0 16px 2px', color: '#64748b',
+        fontSize: 12, fontWeight: 600,
+      }}>
+        {weeks.length} {weeks.length === 1 ? 'semana registrada' : 'semanas registradas'}
+      </p>
+
+      {weeks.map(week => {
+        const booksCount = week.books?.length || 0
+        const booksLabel = booksCount > 0
+          ? week.books.map(book => book.title).join(' · ')
+          : 'Nenhum livro registrado'
+
+        return (
+          <div
+            key={week.id}
+            style={{
+              background: '#1e293b',
+              borderRadius: 18,
+              padding: '16px',
+              border: '1px solid #334155',
+              marginBottom: 12,
+            }}
+          >
+            <div style={{
+              display: 'flex', justifyContent: 'space-between',
+              alignItems: 'flex-start', gap: 12, marginBottom: 14,
+            }}>
+              <div>
+                <p style={{
+                  margin: '0 0 4px', color: '#94a3b8',
+                  fontSize: 11, fontWeight: 700,
+                  textTransform: 'uppercase', letterSpacing: '0.08em',
+                }}>
+                  {week.id}
+                </p>
+                <p style={{ margin: 0, color: '#64748b', fontSize: 13 }}>
+                  Fechada em {formatClosedAt(week.closedAt)}
+                </p>
+              </div>
+              {week.hadPerfectWeek && (
+                <span style={{
+                  background: 'rgba(251,191,36,0.12)',
+                  border: '1px solid rgba(251,191,36,0.25)',
+                  color: '#fbbf24', fontSize: 10, fontWeight: 800,
+                  padding: '4px 9px', borderRadius: 20,
+                  textTransform: 'uppercase', letterSpacing: '0.04em',
+                  flexShrink: 0,
+                }}>
+                  Semana perfeita
+                </span>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+              <div style={{
+                flex: 1, background: 'rgba(16,185,129,0.08)',
+                borderRadius: 12, padding: '10px 12px',
+                border: '1px solid rgba(16,185,129,0.15)',
+              }}>
+                <p style={{ margin: '0 0 2px', color: '#64748b', fontSize: 11, fontWeight: 600 }}>
+                  Valor recebido
+                </p>
+                <p style={{
+                  margin: 0, fontFamily: 'Fraunces, Georgia, serif',
+                  fontSize: 22, fontWeight: 700, color: '#34d399',
+                }}>
+                  {fmt(week.netTotal || 0)}
+                </p>
+              </div>
+              <div style={{
+                minWidth: 112, background: '#0f172a',
+                borderRadius: 12, padding: '10px 12px',
+                border: '1px solid #334155',
+              }}>
+                <p style={{ margin: '0 0 2px', color: '#64748b', fontSize: 11, fontWeight: 600 }}>
+                  Livros
+                </p>
+                <p style={{
+                  margin: 0, fontFamily: 'Fraunces, Georgia, serif',
+                  fontSize: 22, fontWeight: 700, color: '#f1f5f9',
+                }}>
+                  {booksCount}
+                </p>
+              </div>
+            </div>
+
+            <div style={{
+              borderTop: '1px solid #334155',
+              paddingTop: 12,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: 12,
+            }}>
+              <span style={{ color: '#64748b', fontSize: 13 }}>
+                Dízimo: {fmt(week.tithe || 0)}
+              </span>
+              <span style={{
+                color: '#475569', fontSize: 12, textAlign: 'right',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>
+                {booksLabel}
+              </span>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function ParentMode() {
   const [activeTab, setActiveTab] = useState('tasks')
   const [formTask,  setFormTask]  = useState(null)
 
   const { tasks, saveTask, deleteTask, toggleTask } = useTasks()
   const { profile, saveProfile } = useProfile()
+  const { weeks, load: loadWeeks } = useWeeksHistory()
+
+  useEffect(() => {
+    if (activeTab === 'history') loadWeeks()
+  }, [activeTab])
 
   const allCategories = [
     ...DEFAULT_CATEGORIES,
@@ -750,7 +911,7 @@ export default function ParentMode() {
         flexShrink: 0, display: 'flex',
         borderBottom: '1px solid #1e293b', padding: '0 16px',
       }}>
-        {[{ id: 'tasks', label: 'Tarefas' }, { id: 'week', label: 'Semana' }, { id: 'profile', label: 'Perfil' }].map(tab => (
+        {[{ id: 'tasks', label: 'Tarefas' }, { id: 'week', label: 'Semana' }, { id: 'history', label: 'Histórico' }, { id: 'profile', label: 'Perfil' }].map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
@@ -779,7 +940,10 @@ export default function ParentMode() {
           />
         )}
         {activeTab === 'week' && profile !== null && (
-          <WeekClosingTab tasks={tasks} profile={profile} />
+          <WeekClosingTab tasks={tasks} profile={profile} onWeekClosed={loadWeeks} />
+        )}
+        {activeTab === 'history' && (
+          <HistoryTab weeks={weeks} />
         )}
         {activeTab === 'profile' && profile !== null && (
           <ProfileTab profile={profile} onSave={saveProfile} />
