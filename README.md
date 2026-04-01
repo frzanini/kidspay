@@ -134,6 +134,14 @@ npm run build
 npm run preview
 ```
 
+Docker local on `http://localhost:8080`:
+
+```bash
+docker compose -f docker-compose.local.yml up --build
+```
+
+This local Docker flow disables the PWA service worker on purpose so browser cache does not mask onboarding and routing changes during validation.
+
 ## MVP Scope
 
 Current intentional constraints:

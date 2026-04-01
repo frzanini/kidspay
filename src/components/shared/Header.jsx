@@ -24,10 +24,11 @@ export default function Header() {
         ) : (
           <>
             <span>👨‍👩‍👧</span>
-            <span>Modo pais</span>
+            <span>Modo pai</span>
           </>
         )}
       </button>
     </header>
   )
 }
+

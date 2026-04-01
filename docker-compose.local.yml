@@ -1,0 +1,8 @@
+services:
+  kidspay:
+    build:
+      context: .
+      args:
+        VITE_ENABLE_PWA: "false"
+    ports:
+      - "8080:80"

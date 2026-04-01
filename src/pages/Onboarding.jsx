@@ -1,15 +1,16 @@
-import { useState, useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getDB } from '../lib/db'
-import { samuelTemplate } from '../data/samuel-template'
+import { getTaskTemplate } from '../data/samuel-template'
+import TemplateStep from '../components/onboarding/TemplateStep'
 
 const AVATARS = [
-  { emoji: '🦁', label: 'Leão' },
+  { emoji: '🦁', label: 'Leao' },
   { emoji: '🦊', label: 'Raposa' },
   { emoji: '🐬', label: 'Golfinho' },
-  { emoji: '🦅', label: 'Águia' },
+  { emoji: '🦅', label: 'Aguia' },
   { emoji: '🐺', label: 'Lobo' },
-  { emoji: '🦈', label: 'Tubarão' },
+  { emoji: '🦈', label: 'Tubarao' },
 ]
 
 function fmt(value) {
@@ -32,7 +33,6 @@ function RangeSlider({ value, min, max, step, onChange, color, glow }) {
   )
 }
 
-/* ─── Dot step indicator ─────────────────────────── */
 function StepDots({ current }) {
   return (
     <div className="flex gap-2 items-center">
@@ -41,7 +41,7 @@ function StepDots({ current }) {
           key={n}
           className="rounded-full transition-all duration-300"
           style={{
-            width:  current === n ? 20 : 8,
+            width: current === n ? 20 : 8,
             height: 8,
             background: current >= n ? '#10b981' : '#334155',
           }}
@@ -51,45 +51,120 @@ function StepDots({ current }) {
   )
 }
 
-/* ─── Main component ─────────────────────────────── */
+function DeductionControl({ label, enabled, onToggle, percent, onChange, accent, glow }) {
+  return (
+    <div style={{ marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 12 }}>
+        <span style={{ color: '#94a3b8', fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          {label}
+        </span>
+        <button
+          type="button"
+          onClick={onToggle}
+          style={{
+            minWidth: 96,
+            height: 34,
+            borderRadius: 999,
+            border: `1.5px solid ${enabled ? accent : '#334155'}`,
+            background: enabled ? `${accent}22` : 'transparent',
+            color: enabled ? '#f8fafc' : '#64748b',
+            fontSize: 12,
+            fontWeight: 700,
+            cursor: 'pointer',
+          }}
+        >
+          {enabled ? `${percent}%` : 'Desligado'}
+        </button>
+      </div>
+      {enabled && (
+        <>
+          <RangeSlider
+            value={percent}
+            min={0}
+            max={30}
+            step={1}
+            onChange={e => onChange(Number(e.target.value))}
+            color={accent}
+            glow={glow}
+          />
+          <div style={{ display: 'flex', justifyContent: 'space-between', color: '#475569', fontSize: 12, marginTop: 6 }}>
+            <span>0%</span><span>30%</span>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 export default function Onboarding() {
   const navigate = useNavigate()
   const fileInputRef = useRef(null)
 
-  const [step,      setStep]      = useState(1)
-  const [dir,       setDir]       = useState('fwd')
-  const [saving,    setSaving]    = useState(false)
+  const [step, setStep] = useState(1)
+  const [dir, setDir] = useState('fwd')
+  const [saving, setSaving] = useState(false)
 
-  const [childName,      setChildName]      = useState('')
+  const [childName, setChildName] = useState('')
   const [selectedAvatar, setSelectedAvatar] = useState('🦁')
-  const [uploadedPhoto,  setUploadedPhoto]  = useState(null)
-  const [weeklyGoal,     setWeeklyGoal]     = useState(28)
-  const [tithePercent,   setTithePercent]   = useState(10)
+  const [uploadedPhoto, setUploadedPhoto] = useState(null)
+  const [weeklyGoal, setWeeklyGoal] = useState(28)
+  const [titheEnabled, setTitheEnabled] = useState(true)
+  const [tithePercent, setTithePercent] = useState(10)
+  const [savingsEnabled, setSavingsEnabled] = useState(false)
+  const [savingsPercent, setSavingsPercent] = useState(10)
   const [templateChoice, setTemplateChoice] = useState(null)
 
-  function goNext() { setDir('fwd'); setStep(s => s + 1) }
-  function goBack() { setDir('back'); setStep(s => s - 1) }
+  function goNext() {
+    setDir('fwd')
+    setStep(s => s + 1)
+  }
+
+  function goBack() {
+    setDir('back')
+    setStep(s => s - 1)
+  }
 
   function handlePhotoUpload(e) {
     const file = e.target.files[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = ev => { setUploadedPhoto(ev.target.result); setSelectedAvatar(null) }
+    reader.onload = ev => {
+      setUploadedPhoto(ev.target.result)
+      setSelectedAvatar(null)
+    }
     reader.readAsDataURL(file)
   }
 
-  function selectAvatar(emoji) { setSelectedAvatar(emoji); setUploadedPhoto(null) }
+  function selectAvatar(emoji) {
+    setSelectedAvatar(emoji)
+    setUploadedPhoto(null)
+  }
 
   async function handleFinish() {
     if (!templateChoice) return
     setSaving(true)
     try {
       const db = await getDB()
-      await db.put('profile', { childName, photo: uploadedPhoto || selectedAvatar, weeklyGoal, tithePercent }, 'current')
-      if (templateChoice === 'samuel') {
-        for (const task of samuelTemplate) await db.put('tasks', task)
+      const selectedTemplate = getTaskTemplate(templateChoice)
+      await db.put(
+        'profile',
+        {
+          childName,
+          photo: uploadedPhoto || selectedAvatar,
+          weeklyGoal,
+          titheEnabled,
+          tithePercent,
+          savingsEnabled,
+          savingsPercent,
+          templateId: selectedTemplate?.id || null,
+          templateName: selectedTemplate?.name || null,
+        },
+        'current',
+      )
+      if (selectedTemplate) {
+        for (const task of selectedTemplate.tasks) await db.put('tasks', task)
       }
-      navigate('/')
+      navigate(selectedTemplate ? '/' : '/parents')
     } catch (err) {
       console.error(err)
       setSaving(false)
@@ -98,7 +173,7 @@ export default function Onboarding() {
 
   const canNext =
     step === 1 ? childName.trim().length >= 2 :
-    step === 2 ? weeklyGoal >= 1 && tithePercent >= 0 && tithePercent <= 100 :
+    step === 2 ? weeklyGoal >= 1 && tithePercent >= 0 && tithePercent <= 100 && savingsPercent >= 0 && savingsPercent <= 100 :
     !!templateChoice
 
   const animClass = dir === 'fwd'
@@ -107,8 +182,6 @@ export default function Onboarding() {
 
   return (
     <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', background: '#0f172a' }}>
-
-      {/* ── Header ─────────────────────────────────── */}
       <header
         style={{
           flexShrink: 0,
@@ -129,10 +202,7 @@ export default function Onboarding() {
         </div>
       </header>
 
-      {/* ── Scrollable area (content + nav juntos) ──── */}
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-
-        {/* Conteúdo animado */}
         <main
           key={step}
           className={animClass}
@@ -150,22 +220,26 @@ export default function Onboarding() {
           )}
           {step === 2 && (
             <Step2
-              childName={childName}
               weeklyGoal={weeklyGoal}
               setWeeklyGoal={setWeeklyGoal}
+              titheEnabled={titheEnabled}
+              setTitheEnabled={setTitheEnabled}
               tithePercent={tithePercent}
               setTithePercent={setTithePercent}
+              savingsEnabled={savingsEnabled}
+              setSavingsEnabled={setSavingsEnabled}
+              savingsPercent={savingsPercent}
+              setSavingsPercent={setSavingsPercent}
             />
           )}
           {step === 3 && (
-            <Step3
+            <TemplateStep
               templateChoice={templateChoice}
               setTemplateChoice={setTemplateChoice}
             />
           )}
         </main>
 
-        {/* Botões — colados ao fim do conteúdo */}
         <div
           style={{
             flexShrink: 0,
@@ -211,10 +285,9 @@ export default function Onboarding() {
               transition: 'all 0.2s',
             }}
           >
-            {saving ? 'Salvando…' : step < 3 ? 'Próximo →' : '🚀 Começar!'}
+            {saving ? 'Salvando...' : step < 3 ? 'Proximo →' : 'Comecar!'}
           </button>
         </div>
-
       </div>
 
       <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoUpload} />
@@ -222,23 +295,19 @@ export default function Onboarding() {
   )
 }
 
-/* ─── Step 1 ─────────────────────────────────────── */
 function Step1({ childName, setChildName, selectedAvatar, uploadedPhoto, onSelectAvatar, onUploadClick }) {
-  const preview = uploadedPhoto || selectedAvatar
-
   return (
     <div>
       <p style={{ color: '#64748b', fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, textAlign: 'center' }}>
         Passo 1 de 3
       </p>
       <h1 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 28, fontWeight: 700, color: '#f1f5f9', margin: '0 0 4px', lineHeight: 1.2, textAlign: 'center' }}>
-        Quem vai usar o app?
+        Configure o perfil do seu filho
       </h1>
       <p style={{ color: '#64748b', fontSize: 14, marginBottom: 28, textAlign: 'center' }}>
-        Escolha um avatar e coloque o nome do seu filho
+        O responsavel comeca por aqui e deixa tudo pronto para a crianca
       </p>
 
-      {/* Selected avatar — big */}
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
         <div
           style={{
@@ -261,7 +330,6 @@ function Step1({ childName, setChildName, selectedAvatar, uploadedPhoto, onSelec
         </div>
       </div>
 
-      {/* Avatar grid 3×2 */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 10, marginBottom: 14 }}>
         {AVATARS.map(({ emoji, label }) => {
           const active = selectedAvatar === emoji && !uploadedPhoto
@@ -291,7 +359,6 @@ function Step1({ childName, setChildName, selectedAvatar, uploadedPhoto, onSelec
         })}
       </div>
 
-      {/* Upload */}
       <button
         onClick={onUploadClick}
         style={{
@@ -307,10 +374,9 @@ function Step1({ childName, setChildName, selectedAvatar, uploadedPhoto, onSelec
           cursor: 'pointer',
         }}
       >
-        {uploadedPhoto ? '✓ Foto enviada — trocar?' : '📷 Usar foto'}
+        {uploadedPhoto ? 'Foto enviada - trocar?' : 'Usar foto'}
       </button>
 
-      {/* Name input */}
       <label style={{ display: 'block', color: '#64748b', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
         Nome
       </label>
@@ -337,16 +403,27 @@ function Step1({ childName, setChildName, selectedAvatar, uploadedPhoto, onSelec
         }}
       />
       {childName.trim().length > 0 && childName.trim().length < 2 && (
-        <p style={{ color: '#f87171', fontSize: 12, marginTop: 6 }}>Mínimo 2 caracteres</p>
+        <p style={{ color: '#f87171', fontSize: 12, marginTop: 6 }}>Minimo 2 caracteres</p>
       )}
     </div>
   )
 }
 
-/* ─── Step 2 ─────────────────────────────────────── */
-function Step2({ childName, weeklyGoal, setWeeklyGoal, tithePercent, setTithePercent }) {
-  const titheAmt = weeklyGoal * tithePercent / 100
-  const net      = weeklyGoal - titheAmt
+function Step2({
+  weeklyGoal,
+  setWeeklyGoal,
+  titheEnabled,
+  setTitheEnabled,
+  tithePercent,
+  setTithePercent,
+  savingsEnabled,
+  setSavingsEnabled,
+  savingsPercent,
+  setSavingsPercent,
+}) {
+  const titheAmt = titheEnabled ? weeklyGoal * tithePercent / 100 : 0
+  const savingsAmt = savingsEnabled ? weeklyGoal * savingsPercent / 100 : 0
+  const net = weeklyGoal - titheAmt - savingsAmt
 
   return (
     <div>
@@ -354,13 +431,12 @@ function Step2({ childName, weeklyGoal, setWeeklyGoal, tithePercent, setTithePer
         Passo 2 de 3
       </p>
       <h1 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 26, fontWeight: 700, color: '#f1f5f9', margin: '0 0 4px', lineHeight: 1.2, textAlign: 'center' }}>
-        Quanto o {childName || 'seu filho'} pode ganhar?
+        Defina os combinados da semana
       </h1>
       <p style={{ color: '#64748b', fontSize: 14, marginBottom: 32, textAlign: 'center' }}>
-        Se completar todas as tarefas da semana
+        O pai configura meta, dizimo e poupanca antes de liberar o uso
       </p>
 
-      {/* Meta — big value */}
       <div style={{ marginBottom: 28 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 12 }}>
           <span style={{ color: '#94a3b8', fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
@@ -371,39 +447,41 @@ function Step2({ childName, weeklyGoal, setWeeklyGoal, tithePercent, setTithePer
           </span>
         </div>
         <RangeSlider
-          value={weeklyGoal} min={5} max={100} step={0.5}
+          value={weeklyGoal}
+          min={5}
+          max={100}
+          step={0.5}
           onChange={e => setWeeklyGoal(Number(e.target.value))}
-          color="#10b981" glow="rgba(16,185,129,0.2)"
+          color="#10b981"
+          glow="rgba(16,185,129,0.2)"
         />
         <div style={{ display: 'flex', justifyContent: 'space-between', color: '#475569', fontSize: 12, marginTop: 6 }}>
           <span>R$ 5</span><span>R$ 100</span>
         </div>
       </div>
 
-      {/* Divider */}
       <div style={{ height: 1, background: '#1e293b', margin: '0 0 28px' }} />
 
-      {/* Dízimo */}
-      <div style={{ marginBottom: 32 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 12 }}>
-          <span style={{ color: '#94a3b8', fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Dízimo / poupança
-          </span>
-          <span style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 34, fontWeight: 700, color: '#3b82f6', lineHeight: 1 }}>
-            {tithePercent}%
-          </span>
-        </div>
-        <RangeSlider
-          value={tithePercent} min={0} max={30} step={1}
-          onChange={e => setTithePercent(Number(e.target.value))}
-          color="#3b82f6" glow="rgba(59,130,246,0.2)"
-        />
-        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#475569', fontSize: 12, marginTop: 6 }}>
-          <span>0%</span><span>30%</span>
-        </div>
-      </div>
+      <DeductionControl
+        label="Dizimo"
+        enabled={titheEnabled}
+        onToggle={() => setTitheEnabled(value => !value)}
+        percent={tithePercent}
+        onChange={setTithePercent}
+        accent="#3b82f6"
+        glow="rgba(59,130,246,0.2)"
+      />
 
-      {/* Inline preview */}
+      <DeductionControl
+        label="Poupanca"
+        enabled={savingsEnabled}
+        onToggle={() => setSavingsEnabled(value => !value)}
+        percent={savingsPercent}
+        onChange={setSavingsPercent}
+        accent="#f59e0b"
+        glow="rgba(245,158,11,0.2)"
+      />
+
       <div
         style={{
           background: '#1e293b',
@@ -417,121 +495,22 @@ function Step2({ childName, weeklyGoal, setWeeklyGoal, tithePercent, setTithePer
           <span style={{ color: '#f1f5f9', fontWeight: 600, fontSize: 14 }}>{fmt(weeklyGoal)}</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-          <span style={{ color: '#64748b', fontSize: 14 }}>Dízimo ({tithePercent}%)</span>
-          <span style={{ color: '#3b82f6', fontWeight: 600, fontSize: 14 }}>− {fmt(titheAmt)}</span>
+          <span style={{ color: '#64748b', fontSize: 14 }}>Dizimo</span>
+          <span style={{ color: '#3b82f6', fontWeight: 600, fontSize: 14 }}>- {fmt(titheAmt)}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+          <span style={{ color: '#64748b', fontSize: 14 }}>Poupanca</span>
+          <span style={{ color: '#f59e0b', fontWeight: 600, fontSize: 14 }}>- {fmt(savingsAmt)}</span>
         </div>
         <div style={{ borderTop: '1px solid #334155', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ color: '#94a3b8', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Recebe até
+            Recebe ate
           </span>
           <span style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 26, fontWeight: 700, color: '#10b981' }}>
             {fmt(net)}
           </span>
         </div>
       </div>
-    </div>
-  )
-}
-
-/* ─── Step 3 ─────────────────────────────────────── */
-function Step3({ templateChoice, setTemplateChoice }) {
-  const tagsSamuel = ['Oração', 'Exercício', 'Lição', 'Leitura', 'Respeito', '+7']
-
-  return (
-    <div>
-      <p style={{ color: '#64748b', fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, textAlign: 'center' }}>
-        Passo 3 de 3
-      </p>
-      <h1 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 28, fontWeight: 700, color: '#f1f5f9', margin: '0 0 4px', lineHeight: 1.2, textAlign: 'center' }}>
-        Como começar?
-      </h1>
-      <p style={{ color: '#64748b', fontSize: 14, marginBottom: 28, textAlign: 'center' }}>
-        Você pode editar qualquer tarefa depois
-      </p>
-
-      {/* Samuel card */}
-      <button
-        onClick={() => setTemplateChoice('samuel')}
-        style={{
-          width: '100%',
-          padding: '22px 20px',
-          marginBottom: 14,
-          borderRadius: 20,
-          border: `2px solid ${templateChoice === 'samuel' ? '#10b981' : '#1e293b'}`,
-          background: templateChoice === 'samuel'
-            ? 'linear-gradient(135deg, #052e16 0%, #064e3b 100%)'
-            : '#1e293b',
-          textAlign: 'left',
-          cursor: 'pointer',
-          position: 'relative',
-          boxShadow: templateChoice === 'samuel' ? '0 8px 28px rgba(16,185,129,0.22)' : 'none',
-          transform: templateChoice === 'samuel' ? 'scale(1.01)' : 'scale(1)',
-          transition: 'all 0.2s',
-        }}
-      >
-        {/* Badge */}
-        <span style={{
-          position: 'absolute', top: 16, right: 16,
-          background: '#f59e0b', color: '#1c1917',
-          fontSize: 11, fontWeight: 800,
-          padding: '3px 9px', borderRadius: 20,
-          textTransform: 'uppercase', letterSpacing: '0.05em',
-        }}>
-          Recomendado
-        </span>
-
-        <div style={{ fontSize: 36, marginBottom: 12 }}>📋</div>
-        <p style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 20, fontWeight: 700, color: '#f1f5f9', margin: '0 0 6px' }}>
-          Modelo Samuel
-        </p>
-        <p style={{ color: templateChoice === 'samuel' ? '#6ee7b7' : '#64748b', fontSize: 14, lineHeight: 1.5, margin: '0 0 14px' }}>
-          12 tarefas prontas em 5 categorias da vida
-        </p>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          {tagsSamuel.map(t => (
-            <span
-              key={t}
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                padding: '4px 10px',
-                borderRadius: 20,
-                background: templateChoice === 'samuel' ? 'rgba(16,185,129,0.18)' : '#0f172a',
-                color: templateChoice === 'samuel' ? '#6ee7b7' : '#475569',
-              }}
-            >
-              {t}
-            </span>
-          ))}
-        </div>
-      </button>
-
-      {/* Zero card */}
-      <button
-        onClick={() => setTemplateChoice('zero')}
-        style={{
-          width: '100%',
-          padding: '22px 20px',
-          borderRadius: 20,
-          border: `2px solid ${templateChoice === 'zero' ? '#3b82f6' : '#1e293b'}`,
-          background: templateChoice === 'zero'
-            ? 'rgba(59,130,246,0.07)'
-            : '#1e293b',
-          textAlign: 'left',
-          cursor: 'pointer',
-          boxShadow: templateChoice === 'zero' ? '0 8px 28px rgba(59,130,246,0.15)' : 'none',
-          transform: templateChoice === 'zero' ? 'scale(1.01)' : 'scale(1)',
-          transition: 'all 0.2s',
-        }}
-      >
-        <div style={{ fontSize: 36, marginBottom: 12 }}>✏️</div>
-        <p style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 20, fontWeight: 700, color: '#f1f5f9', margin: '0 0 6px' }}>
-          Começar do zero
-        </p>
-        <p style={{ color: '#64748b', fontSize: 14, lineHeight: 1.5, margin: 0 }}>
-          Crie suas próprias tarefas do jeito que preferir
-        </p>
-      </button>
     </div>
   )
 }

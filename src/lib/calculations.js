@@ -21,11 +21,12 @@ export function calcWeekSummary(tasks, entries) {
 }
 
 // Resultado final: (subtotal + bônus livros) × (1 − dízimo%)
-export function calcFinal(subtotal, bookBonus, tithePercent) {
+export function calcFinal(subtotal, bookBonus, tithePercent = 0, savingsPercent = 0) {
   const gross = subtotal + bookBonus
   const tithe = gross * (tithePercent / 100)
-  const net   = gross - tithe
-  return { gross, tithe, net }
+  const savings = gross * (savingsPercent / 100)
+  const net   = gross - tithe - savings
+  return { gross, tithe, savings, net }
 }
 
 // Semana perfeita: nenhuma so_penalidade com affectsStreak foi marcada

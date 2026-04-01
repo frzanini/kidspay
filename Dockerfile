@@ -3,6 +3,9 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+ARG VITE_ENABLE_PWA=true
+ENV VITE_ENABLE_PWA=$VITE_ENABLE_PWA
+
 COPY package*.json .npmrc ./
 RUN npm ci
 

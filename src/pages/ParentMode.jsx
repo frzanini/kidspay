@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import Header from '../components/shared/Header'
 import TaskForm from '../components/config/TaskForm'
 import { getDB } from '../lib/db'
@@ -7,7 +7,7 @@ import {
   calcWeekSummary, calcFinal, hadPerfectWeek as checkPerfect,
 } from '../lib/calculations'
 
-// ── Constants ────────────────────────────────────────────────────────────────
+// -- Constants ----------------------------------------------------------------
 
 const TYPE_META = {
   habito:        { label: 'Hábito',        color: '#8b5cf6' },
@@ -18,13 +18,13 @@ const TYPE_META = {
 }
 
 const DEFAULT_CATEGORIES = ['Espiritual', 'Físico', 'Intelectual', 'Social', 'Emocional']
-const AVATARS = ['🦁', '🦊', '🐬', '🦅', '🐺', '🦈']
+const AVATARS = ['??', '??', '??', '??', '??', '??']
 
 function fmt(v) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
-// ── Hooks ────────────────────────────────────────────────────────────────────
+// -- Hooks --------------------------------------------------------------------
 
 function useProfile() {
   const [profile, setProfile] = useState(null)
@@ -37,8 +37,9 @@ function useProfile() {
 
   async function saveProfile(data) {
     const db = await getDB()
-    await db.put('profile', data, 'current')
-    setProfile(data)
+    const merged = { ...(profile || {}), ...data }
+    await db.put('profile', merged, 'current')
+    setProfile(merged)
   }
 
   return { profile, saveProfile }
@@ -118,7 +119,7 @@ function useWeeksHistory() {
   return { weeks, load }
 }
 
-// ── Toggle switch ────────────────────────────────────────────────────────────
+// -- Toggle switch ------------------------------------------------------------
 
 function Toggle({ value, onChange }) {
   return (
@@ -140,7 +141,7 @@ function Toggle({ value, onChange }) {
   )
 }
 
-// ── Task item ────────────────────────────────────────────────────────────────
+// -- Task item ----------------------------------------------------------------
 
 function TaskItem({ task, onToggle, onEdit }) {
   const meta = TYPE_META[task.type] || TYPE_META.simbolico
@@ -194,13 +195,13 @@ function TaskItem({ task, onToggle, onEdit }) {
           fontSize: 13, flexShrink: 0,
         }}
       >
-        ✏️
+        ??
       </button>
     </div>
   )
 }
 
-// ── Totals card ──────────────────────────────────────────────────────────────
+// -- Totals card --------------------------------------------------------------
 
 function TotalsCard({ tasks }) {
   const active = tasks.filter(t => t.active)
@@ -227,7 +228,7 @@ function TotalsCard({ tasks }) {
           marginBottom: 12,
           display: 'flex', alignItems: 'center', gap: 10,
         }}>
-          <span style={{ fontSize: 18 }}>⚠️</span>
+          <span style={{ fontSize: 18 }}>??</span>
           <p style={{ margin: 0, color: '#fca5a5', fontSize: 13, fontWeight: 600, lineHeight: 1.4 }}>
             Os débitos superam os créditos. O filho pode terminar a semana no negativo.
           </p>
@@ -274,7 +275,7 @@ function TotalsCard({ tasks }) {
               fontSize: 18, fontWeight: 700,
               color: debitsExceed ? '#ef4444' : '#f87171',
             }}>
-              −{fmt(totalDebits)}
+              -{fmt(totalDebits)}
             </p>
           </div>
           <div style={{
@@ -290,7 +291,7 @@ function TotalsCard({ tasks }) {
               fontSize: 18, fontWeight: 700,
               color: debitsExceed ? '#ef4444' : '#3b82f6',
             }}>
-              {balance >= 0 ? '' : '−'}{fmt(Math.abs(balance))}
+              {balance >= 0 ? '' : '-'}{fmt(Math.abs(balance))}
             </p>
           </div>
         </div>
@@ -299,13 +300,13 @@ function TotalsCard({ tasks }) {
   )
 }
 
-// ── Tasks tab ────────────────────────────────────────────────────────────────
+// -- Tasks tab ----------------------------------------------------------------
 
 function TasksTab({ tasks, onToggle, onEdit, onNew }) {
   if (tasks.length === 0) {
     return (
       <div style={{ padding: '64px 24px', textAlign: 'center' }}>
-        <div style={{ fontSize: 52, marginBottom: 16 }}>📋</div>
+        <div style={{ fontSize: 52, marginBottom: 16 }}>??</div>
         <h3 style={{
           fontFamily: 'Fraunces, Georgia, serif',
           fontSize: 22, fontWeight: 700, color: '#f1f5f9', margin: '0 0 8px',
@@ -313,7 +314,7 @@ function TasksTab({ tasks, onToggle, onEdit, onNew }) {
           Nenhuma tarefa ainda
         </h3>
         <p style={{ color: '#64748b', fontSize: 14, marginBottom: 28, lineHeight: 1.5 }}>
-          Adicione tarefas para o seu filho começar a ganhar recompensas
+          O pai precisa cadastrar ou ativar tarefas antes de liberar o modo filho.
         </p>
         <button
           onClick={onNew}
@@ -324,7 +325,7 @@ function TasksTab({ tasks, onToggle, onEdit, onNew }) {
             fontFamily: 'Plus Jakarta Sans, sans-serif',
           }}
         >
-          + Criar primeira tarefa
+          + Cadastrar primeira tarefa
         </button>
       </div>
     )
@@ -373,25 +374,39 @@ function TasksTab({ tasks, onToggle, onEdit, onNew }) {
   )
 }
 
-// ── Profile tab ──────────────────────────────────────────────────────────────
+// -- Profile tab --------------------------------------------------------------
 
 function ProfileTab({ profile, onSave }) {
   const [childName,    setChildName]    = useState(profile?.childName    || '')
-  const [photo,        setPhoto]        = useState(profile?.photo        || '🦁')
+  const [photo,        setPhoto]        = useState(profile?.photo        || '??')
   const [weeklyGoal,   setWeeklyGoal]   = useState(profile?.weeklyGoal   || 28)
+  const [titheEnabled, setTitheEnabled] = useState(profile?.titheEnabled ?? true)
   const [tithePercent, setTithePercent] = useState(profile?.tithePercent || 10)
+  const [savingsEnabled, setSavingsEnabled] = useState(profile?.savingsEnabled ?? false)
+  const [savingsPercent, setSavingsPercent] = useState(profile?.savingsPercent || 10)
   const [saved,        setSaved]        = useState(false)
 
   useEffect(() => {
     if (!profile) return
     setChildName(profile.childName    || '')
-    setPhoto(profile.photo            || '🦁')
+    setPhoto(profile.photo            || '??')
     setWeeklyGoal(profile.weeklyGoal  || 28)
+    setTitheEnabled(profile.titheEnabled ?? true)
     setTithePercent(profile.tithePercent || 10)
+    setSavingsEnabled(profile.savingsEnabled ?? false)
+    setSavingsPercent(profile.savingsPercent || 10)
   }, [profile])
 
   async function handleSave() {
-    await onSave({ childName, photo, weeklyGoal, tithePercent })
+    await onSave({
+      childName,
+      photo,
+      weeklyGoal,
+      titheEnabled,
+      tithePercent,
+      savingsEnabled,
+      savingsPercent,
+    })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -477,29 +492,23 @@ function ProfileTab({ profile, onSave }) {
         />
       </div>
 
-      {/* Tithe slider */}
-      <div style={{ marginBottom: 32 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-          <span style={{
-            color: '#94a3b8', fontSize: 12, fontWeight: 700,
-            textTransform: 'uppercase', letterSpacing: '0.06em',
-          }}>
-            Dízimo / poupança
-          </span>
-          <span style={{
-            fontFamily: 'Fraunces, Georgia, serif',
-            fontSize: 20, color: '#3b82f6', fontWeight: 700,
-          }}>
-            {tithePercent}%
-          </span>
-        </div>
-        <input
-          type="range" min={0} max={30} step={1} value={tithePercent}
-          onChange={e => setTithePercent(Number(e.target.value))}
-          className="kp-slider"
-          style={{ '--fill': `${(tithePercent / 30) * 100}%`, '--clr': '#3b82f6', '--glow': 'rgba(59,130,246,0.2)' }}
-        />
-      </div>
+      <ProfileDeductionControl
+        label="Dizimo"
+        enabled={titheEnabled}
+        onToggle={() => setTitheEnabled(v => !v)}
+        percent={tithePercent}
+        onChange={setTithePercent}
+        color="#3b82f6"
+      />
+
+      <ProfileDeductionControl
+        label="Poupanca"
+        enabled={savingsEnabled}
+        onToggle={() => setSavingsEnabled(v => !v)}
+        percent={savingsPercent}
+        onChange={setSavingsPercent}
+        color="#f59e0b"
+      />
 
       <button
         onClick={handleSave}
@@ -518,7 +527,42 @@ function ProfileTab({ profile, onSave }) {
   )
 }
 
-// ── Weekly closing tab ───────────────────────────────────────────────────────
+function ProfileDeductionControl({ label, enabled, onToggle, percent, onChange, color }) {
+  return (
+    <div style={{ marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+        <span style={{
+          color: '#94a3b8', fontSize: 12, fontWeight: 700,
+          textTransform: 'uppercase', letterSpacing: '0.06em',
+        }}>
+          {label}
+        </span>
+        <button
+          onClick={onToggle}
+          style={{
+            minWidth: 96, height: 34, borderRadius: 999,
+            border: `1.5px solid ${enabled ? color : '#334155'}`,
+            background: enabled ? `${color}22` : 'transparent',
+            color: enabled ? '#f8fafc' : '#64748b',
+            fontSize: 12, fontWeight: 700, cursor: 'pointer',
+          }}
+        >
+          {enabled ? `${percent}%` : 'Desligado'}
+        </button>
+      </div>
+      {enabled && (
+        <input
+          type="range" min={0} max={30} step={1} value={percent}
+          onChange={e => onChange(Number(e.target.value))}
+          className="kp-slider"
+          style={{ '--fill': `${(percent / 30) * 100}%`, '--clr': color, '--glow': `${color}33` }}
+        />
+      )}
+    </div>
+  )
+}
+
+// -- Weekly closing tab -------------------------------------------------------
 
 function WeekClosingTab({ tasks, profile, onWeekClosed }) {
   const weekId = getISOWeekId()
@@ -530,12 +574,15 @@ function WeekClosingTab({ tasks, profile, onWeekClosed }) {
   const [celebration, setCelebration] = useState(false)
   const [done,        setDone]        = useState(false)
 
-  const tithePercent = profile?.tithePercent || 10
+  const titheEnabled = profile?.titheEnabled ?? true
+  const tithePercent = titheEnabled ? (profile?.tithePercent || 10) : 0
+  const savingsEnabled = profile?.savingsEnabled ?? false
+  const savingsPercent = savingsEnabled ? (profile?.savingsPercent || 10) : 0
   const childName    = profile?.childName    || 'Seu filho'
 
   const { credits, debits, subtotal } = calcWeekSummary(tasks, entries)
   const bookBonus  = books.reduce((s, b) => s + b.bonus, 0)
-  const { gross, tithe, net } = calcFinal(subtotal, bookBonus, tithePercent)
+  const { gross, tithe, savings, net } = calcFinal(subtotal, bookBonus, tithePercent, savingsPercent)
   const perfect = checkPerfect(tasks, entries)
   const hasData = entries.some(e => e.checked)
 
@@ -553,6 +600,7 @@ function WeekClosingTab({ tasks, profile, onWeekClosed }) {
       closedAt: new Date().toISOString(),
       grossTotal: gross,
       tithe,
+      savings,
       netTotal: net,
       hadPerfectWeek: perfect,
       books,
@@ -565,7 +613,7 @@ function WeekClosingTab({ tasks, profile, onWeekClosed }) {
   if (alreadyClosed || done) {
     return (
       <div style={{ padding: '64px 24px', textAlign: 'center' }}>
-        <div style={{ fontSize: 52, marginBottom: 16 }}>✅</div>
+        <div style={{ fontSize: 52, marginBottom: 16 }}>?</div>
         <h3 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 22, fontWeight: 700, color: '#f1f5f9', margin: '0 0 8px' }}>
           Semana fechada!
         </h3>
@@ -599,7 +647,7 @@ function WeekClosingTab({ tasks, profile, onWeekClosed }) {
         <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
           {[
             { label: 'Créditos', value: `+${fmt(credits)}`, bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.15)', color: '#10b981' },
-            { label: 'Débitos',  value: `−${fmt(debits)}`,  bg: 'rgba(239,68,68,0.08)',  border: 'rgba(239,68,68,0.15)',  color: '#f87171' },
+            { label: 'Débitos',  value: `-${fmt(debits)}`,  bg: 'rgba(239,68,68,0.08)',  border: 'rgba(239,68,68,0.15)',  color: '#f87171' },
           ].map(({ label, value, bg, border, color }) => (
             <div key={label} style={{ flex: 1, background: bg, borderRadius: 12, padding: '10px 12px', border: `1px solid ${border}` }}>
               <p style={{ margin: '0 0 2px', color: '#64748b', fontSize: 11, fontWeight: 600 }}>{label}</p>
@@ -615,7 +663,7 @@ function WeekClosingTab({ tasks, profile, onWeekClosed }) {
         </div>
         {perfect && hasData && (
           <div style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(251,191,36,0.1)', borderRadius: 10, border: '1px solid rgba(251,191,36,0.2)', textAlign: 'center' }}>
-            <span style={{ color: '#fbbf24', fontSize: 12, fontWeight: 700 }}>⭐ Semana perfeita!</span>
+            <span style={{ color: '#fbbf24', fontSize: 12, fontWeight: 700 }}>? Semana perfeita!</span>
           </div>
         )}
       </div>
@@ -633,7 +681,7 @@ function WeekClosingTab({ tasks, profile, onWeekClosed }) {
             </div>
             <button onClick={() => setBooks(prev => prev.filter((_, j) => j !== i))}
               style={{ width: 28, height: 28, borderRadius: 8, border: 'none', background: '#334155', color: '#94a3b8', cursor: 'pointer', fontSize: 12 }}>
-              ✕
+              ?
             </button>
           </div>
         ))}
@@ -672,7 +720,8 @@ function WeekClosingTab({ tasks, profile, onWeekClosed }) {
         </p>
         {row('Subtotal', fmt(subtotal))}
         {bookBonus > 0 && row('Bônus livros', `+${fmt(bookBonus)}`, '#34d399')}
-        {row(`Dízimo (${tithePercent}%)`, `−${fmt(tithe)}`, '#fbbf24')}
+        {titheEnabled && row(`Dizimo (${tithePercent}%)`, `-${fmt(tithe)}`, '#fbbf24')}
+        {savingsEnabled && row(`Poupanca (${savingsPercent}%)`, `-${fmt(savings)}`, '#f59e0b')}
         <div style={{ borderTop: '1px solid rgba(16,185,129,0.2)', paddingTop: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ color: '#fff', fontWeight: 700 }}>{childName} recebe</span>
           <span style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 30, fontWeight: 700, color: '#34d399' }}>
@@ -694,7 +743,7 @@ function WeekClosingTab({ tasks, profile, onWeekClosed }) {
           boxShadow: hasData ? '0 4px 20px rgba(16,185,129,0.35)' : 'none',
         }}
       >
-        Fechar semana →
+        Fechar semana ?
       </button>
 
       {/* Modal celebração */}
@@ -707,25 +756,25 @@ function WeekClosingTab({ tasks, profile, onWeekClosed }) {
             onClick={e => e.stopPropagation()}
             style={{ background: '#1e293b', borderRadius: 24, padding: '32px 24px', width: '100%', maxWidth: 360, textAlign: 'center', border: '1px solid #334155' }}
           >
-            <div style={{ fontSize: 56, marginBottom: 12 }}>🎉</div>
+            <div style={{ fontSize: 56, marginBottom: 12 }}>??</div>
             <h2 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 26, fontWeight: 700, color: '#f1f5f9', margin: '0 0 6px' }}>
               Semana incrível!
             </h2>
             {perfect && (
-              <p style={{ color: '#fbbf24', fontSize: 13, fontWeight: 700, margin: '0 0 12px' }}>⭐ Semana perfeita!</p>
+              <p style={{ color: '#fbbf24', fontSize: 13, fontWeight: 700, margin: '0 0 12px' }}>? Semana perfeita!</p>
             )}
             <p style={{ color: '#64748b', fontSize: 14, margin: '0 0 6px' }}>{childName} vai receber</p>
             <p style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 44, fontWeight: 700, color: '#34d399', margin: '0 0 4px' }}>
               {fmt(net)}
             </p>
             <p style={{ color: '#475569', fontSize: 12, margin: '0 0 24px' }}>
-              Dízimo: {fmt(tithe)}
+              Dizimo: {fmt(tithe)} | Poupanca: {fmt(savings)}
             </p>
             <button
               onClick={handleConfirm}
               style={{ width: '100%', height: 52, borderRadius: 14, border: 'none', background: '#10b981', color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'Plus Jakarta Sans, sans-serif', boxShadow: '0 4px 20px rgba(16,185,129,0.4)', marginBottom: 10 }}
             >
-              Confirmar fechamento ✓
+              Confirmar fechamento ?
             </button>
             <button
               onClick={() => setCelebration(false)}
@@ -740,7 +789,7 @@ function WeekClosingTab({ tasks, profile, onWeekClosed }) {
   )
 }
 
-// ── Main ─────────────────────────────────────────────────────────────────────
+// -- Main ---------------------------------------------------------------------
 
 function HistoryTab({ weeks }) {
   function formatClosedAt(isoDate) {
@@ -754,7 +803,7 @@ function HistoryTab({ weeks }) {
   if (weeks.length === 0) {
     return (
       <div style={{ padding: '64px 24px', textAlign: 'center' }}>
-        <div style={{ fontSize: 52, marginBottom: 16 }}>🗂️</div>
+        <div style={{ fontSize: 52, marginBottom: 16 }}>???</div>
         <h3 style={{
           fontFamily: 'Fraunces, Georgia, serif',
           fontSize: 22, fontWeight: 700, color: '#f1f5f9', margin: '0 0 8px',
@@ -866,7 +915,7 @@ function HistoryTab({ weeks }) {
               gap: 12,
             }}>
               <span style={{ color: '#64748b', fontSize: 13 }}>
-                Dízimo: {fmt(week.tithe || 0)}
+                Dizimo: {fmt(week.tithe || 0)} | Poupanca: {fmt(week.savings || 0)}
               </span>
               <span style={{
                 color: '#475569', fontSize: 12, textAlign: 'right',
@@ -980,3 +1029,4 @@ export default function ParentMode() {
     </div>
   )
 }
+
