@@ -2,6 +2,7 @@
 import Header from '../components/shared/Header'
 import TaskForm from '../components/config/TaskForm'
 import { getDB } from '../lib/db'
+import { AVATAR_OPTIONS, DEFAULT_AVATAR, UI_ICONS } from '../lib/icons'
 import {
   getISOWeekId, pagesBonus,
   calcWeekSummary, calcFinal, hadPerfectWeek as checkPerfect,
@@ -18,7 +19,7 @@ const TYPE_META = {
 }
 
 const DEFAULT_CATEGORIES = ['Espiritual', 'Físico', 'Intelectual', 'Social', 'Emocional']
-const AVATARS = ['??', '??', '??', '??', '??', '??']
+const AVATARS = AVATAR_OPTIONS.map(option => option.emoji)
 
 function fmt(v) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -195,7 +196,7 @@ function TaskItem({ task, onToggle, onEdit }) {
           fontSize: 13, flexShrink: 0,
         }}
       >
-        ??
+        {UI_ICONS.edit}
       </button>
     </div>
   )
@@ -228,7 +229,7 @@ function TotalsCard({ tasks }) {
           marginBottom: 12,
           display: 'flex', alignItems: 'center', gap: 10,
         }}>
-          <span style={{ fontSize: 18 }}>??</span>
+          <span style={{ fontSize: 18 }}>{UI_ICONS.warning}</span>
           <p style={{ margin: 0, color: '#fca5a5', fontSize: 13, fontWeight: 600, lineHeight: 1.4 }}>
             Os débitos superam os créditos. O filho pode terminar a semana no negativo.
           </p>
@@ -306,7 +307,7 @@ function TasksTab({ tasks, onToggle, onEdit, onNew }) {
   if (tasks.length === 0) {
     return (
       <div style={{ padding: '64px 24px', textAlign: 'center' }}>
-        <div style={{ fontSize: 52, marginBottom: 16 }}>??</div>
+        <div style={{ fontSize: 52, marginBottom: 16 }}>{UI_ICONS.checklist}</div>
         <h3 style={{
           fontFamily: 'Fraunces, Georgia, serif',
           fontSize: 22, fontWeight: 700, color: '#f1f5f9', margin: '0 0 8px',
@@ -378,7 +379,7 @@ function TasksTab({ tasks, onToggle, onEdit, onNew }) {
 
 function ProfileTab({ profile, onSave }) {
   const [childName,    setChildName]    = useState(profile?.childName    || '')
-  const [photo,        setPhoto]        = useState(profile?.photo        || '??')
+  const [photo,        setPhoto]        = useState(profile?.photo        || DEFAULT_AVATAR)
   const [weeklyGoal,   setWeeklyGoal]   = useState(profile?.weeklyGoal   || 28)
   const [titheEnabled, setTitheEnabled] = useState(profile?.titheEnabled ?? true)
   const [tithePercent, setTithePercent] = useState(profile?.tithePercent || 10)
@@ -389,7 +390,7 @@ function ProfileTab({ profile, onSave }) {
   useEffect(() => {
     if (!profile) return
     setChildName(profile.childName    || '')
-    setPhoto(profile.photo            || '??')
+    setPhoto(profile.photo            || DEFAULT_AVATAR)
     setWeeklyGoal(profile.weeklyGoal  || 28)
     setTitheEnabled(profile.titheEnabled ?? true)
     setTithePercent(profile.tithePercent || 10)
@@ -756,12 +757,12 @@ function WeekClosingTab({ tasks, profile, onWeekClosed }) {
             onClick={e => e.stopPropagation()}
             style={{ background: '#1e293b', borderRadius: 24, padding: '32px 24px', width: '100%', maxWidth: 360, textAlign: 'center', border: '1px solid #334155' }}
           >
-            <div style={{ fontSize: 56, marginBottom: 12 }}>??</div>
+            <div style={{ fontSize: 56, marginBottom: 12 }}>{UI_ICONS.celebrate}</div>
             <h2 style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 26, fontWeight: 700, color: '#f1f5f9', margin: '0 0 6px' }}>
               Semana incrível!
             </h2>
             {perfect && (
-              <p style={{ color: '#fbbf24', fontSize: 13, fontWeight: 700, margin: '0 0 12px' }}>? Semana perfeita!</p>
+              <p style={{ color: '#fbbf24', fontSize: 13, fontWeight: 700, margin: '0 0 12px' }}>{UI_ICONS.closeWeek} Semana perfeita!</p>
             )}
             <p style={{ color: '#64748b', fontSize: 14, margin: '0 0 6px' }}>{childName} vai receber</p>
             <p style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 44, fontWeight: 700, color: '#34d399', margin: '0 0 4px' }}>
@@ -803,7 +804,7 @@ function HistoryTab({ weeks }) {
   if (weeks.length === 0) {
     return (
       <div style={{ padding: '64px 24px', textAlign: 'center' }}>
-        <div style={{ fontSize: 52, marginBottom: 16 }}>???</div>
+        <div style={{ fontSize: 52, marginBottom: 16 }}>{UI_ICONS.history}</div>
         <h3 style={{
           fontFamily: 'Fraunces, Georgia, serif',
           fontSize: 22, fontWeight: 700, color: '#f1f5f9', margin: '0 0 8px',

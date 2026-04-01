@@ -3,15 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { getDB } from '../lib/db'
 import { getTaskTemplate } from '../data/samuel-template'
 import TemplateStep from '../components/onboarding/TemplateStep'
+import { AVATAR_OPTIONS, DEFAULT_AVATAR } from '../lib/icons'
 
-const AVATARS = [
-  { emoji: '🦁', label: 'Leao' },
-  { emoji: '🦊', label: 'Raposa' },
-  { emoji: '🐬', label: 'Golfinho' },
-  { emoji: '🦅', label: 'Aguia' },
-  { emoji: '🐺', label: 'Lobo' },
-  { emoji: '🦈', label: 'Tubarao' },
-]
+const AVATARS = AVATAR_OPTIONS
 
 function fmt(value) {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -105,7 +99,7 @@ export default function Onboarding() {
   const [saving, setSaving] = useState(false)
 
   const [childName, setChildName] = useState('')
-  const [selectedAvatar, setSelectedAvatar] = useState('🦁')
+  const [selectedAvatar, setSelectedAvatar] = useState(DEFAULT_AVATAR)
   const [uploadedPhoto, setUploadedPhoto] = useState(null)
   const [weeklyGoal, setWeeklyGoal] = useState(28)
   const [titheEnabled, setTitheEnabled] = useState(true)

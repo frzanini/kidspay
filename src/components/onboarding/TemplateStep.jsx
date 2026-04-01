@@ -1,4 +1,5 @@
 import { TASK_TEMPLATES } from '../../data/samuel-template'
+import { TEMPLATE_ICONS } from '../../lib/icons'
 
 export default function TemplateStep({ templateChoice, setTemplateChoice }) {
   return (
@@ -123,7 +124,7 @@ export default function TemplateStep({ templateChoice, setTemplateChoice }) {
           transition: 'all 0.2s',
         }}
       >
-        <div style={{ fontSize: 36, marginBottom: 12 }}>✏️</div>
+        <div style={{ fontSize: 36, marginBottom: 12 }}>{TEMPLATE_ICONS.custom}</div>
         <p style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 20, fontWeight: 700, color: '#f1f5f9', margin: '0 0 6px' }}>
           Comecar do zero
         </p>

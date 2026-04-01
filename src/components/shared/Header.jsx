@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
+import { UI_ICONS } from '../../lib/icons'
 
 export default function Header() {
   const navigate = useNavigate()
@@ -18,12 +19,12 @@ export default function Header() {
       >
         {isParentMode ? (
           <>
-            <span>👦</span>
+            <span>{UI_ICONS.childMode}</span>
             <span>Modo filho</span>
           </>
         ) : (
           <>
-            <span>👨‍👩‍👧</span>
+            <span>{UI_ICONS.parentMode}</span>
             <span>Modo pai</span>
           </>
         )}
@@ -31,4 +32,3 @@ export default function Header() {
     </header>
   )
 }
-
