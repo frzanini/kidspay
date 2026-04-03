@@ -1,5 +1,6 @@
 import paisagem from '../../assets/paisagem.png'
 import { resolveAvatar } from '../../lib/avatarAssets'
+import { useInstallPrompt } from '../../lib/useInstallPrompt'
 
 function fmt(v) {
   if (!v && v !== 0) return 'R$ 0,00'
@@ -7,6 +8,7 @@ function fmt(v) {
 }
 
 export default function HeroSection({ childName, photo, tasksCompleted, tasksTotal, weekBalance, landscape }) {
+  const { canInstall, promptInstall } = useInstallPrompt()
   const avatarSrc = resolveAvatar(photo)
   const allDone   = tasksTotal > 0 && tasksCompleted === tasksTotal
 
@@ -99,12 +101,31 @@ export default function HeroSection({ childName, photo, tasksCompleted, tasksTot
               width: 350, height: 350,
               borderRadius: '50%',
               objectFit: 'cover',
-              display: 'block'
-              //filter: 'drop-shadow(0 6px 18px rgba(0,0,0,0.22))',
+              display: 'block',
             }}
           />
         </div>
       </div>
+
+      {/* Botão instalar PWA — canto inferior esquerdo */}
+      {canInstall && (
+        <button
+          onClick={promptInstall}
+          style={{
+            position: 'absolute', bottom: 108, left: 16,
+            background: 'rgba(255,255,255,0.78)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            borderRadius: 999, padding: '6px 14px',
+            display: 'flex', alignItems: 'center', gap: 6,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.6)',
+            border: '1px solid rgba(255,255,255,0.5)',
+            cursor: 'pointer', fontSize: 12, fontWeight: 800, color: '#1A1A1A',
+          }}
+        >
+          📲 Instalar app
+        </button>
+      )}
 
       {/* Saldo — inferior, usando Fraunces para destaque */}
       <div style={{

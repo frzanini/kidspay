@@ -5,6 +5,8 @@ import garota4 from '../assets/avatars/garota4.png'
 import garoto1 from '../assets/avatars/garoto1.png'
 import garoto2 from '../assets/avatars/garoto2.png'
 import garoto3 from '../assets/avatars/garoto3.png'
+import garoto4 from '../assets/avatars/garoto4.png'
+import garoto5 from '../assets/avatars/garoto5.png'
 
 export const AVATAR_LIST = [
   { key: 'garota1.png', src: garota1, label: 'Menina 1' },
@@ -14,6 +16,8 @@ export const AVATAR_LIST = [
   { key: 'garoto1.png', src: garoto1, label: 'Menino 1' },
   { key: 'garoto2.png', src: garoto2, label: 'Menino 2' },
   { key: 'garoto3.png', src: garoto3, label: 'Samuel' },
+  { key: 'garoto4.png', src: garoto4, label: 'Isaac' },
+  { key: 'garoto5.png', src: garoto5, label: 'Nicolas' },
 ]
 
 const AVATAR_MAP = Object.fromEntries(AVATAR_LIST.map(a => [a.key, a.src]))

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useInstallPrompt } from '../lib/useInstallPrompt'
 import BottomNav from '../components/shared/BottomNav'
 import AvatarPicker from '../components/shared/AvatarPicker'
 import TaskForm from '../components/config/TaskForm'
@@ -295,6 +296,7 @@ function TasksTab({ tasks, onToggle, onEdit, onNew }) {
 // -- ProfileTab --------------------------------------------------------------
 
 function ProfileTab({ profile, onSave }) {
+  const { canInstall, promptInstall }        = useInstallPrompt()
   const [childName,      setChildName]      = useState(profile?.childName      || '')
   const [photo,          setPhoto]          = useState(profile?.photo          || 'garota1.png')
   const [weeklyGoal,     setWeeklyGoal]     = useState(profile?.weeklyGoal     || 28)
@@ -386,6 +388,20 @@ function ProfileTab({ profile, onSave }) {
       >
         {saved ? '✓ Salvo!' : 'Salvar alterações'}
       </button>
+
+      {canInstall && (
+        <button
+          onClick={promptInstall}
+          style={{
+            width: '100%', height: 52, borderRadius: 14, border: '2px solid #4338ca',
+            background: 'transparent',
+            color: '#4338ca', fontSize: 15, fontWeight: 800, cursor: 'pointer',
+            marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}
+        >
+          📲 Instalar app no celular
+        </button>
+      )}
     </div>
   )
 }

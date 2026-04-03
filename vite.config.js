@@ -17,6 +17,7 @@ export default defineConfig(({ mode }) => {
             VitePWA({
               injectRegister: 'auto',
               registerType: 'autoUpdate',
+              devOptions: { enabled: true },
               includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'icons/*.png'],
               manifest: {
                 name: 'KidsPay',
